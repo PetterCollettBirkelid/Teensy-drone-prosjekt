@@ -1,24 +1,32 @@
 
 #include <Arduino.h>
 #include <math.h>
+#include "IMU.h"
+
+Orientation orientation;
+bool imuInitialized = false;
+unsigned long lastIMURead = 0;
 
 void setup() {
+    delay(1000);
     Serial.begin(115200);
 }
 
 void loop() {
-    float t = millis() / 1000.0f;
 
-    float pitch = 30.0f * sin(t);
-    float roll  = 60.0f * sin(2.0f * t);
-    float yaw   = 90.0f * sin(0.5f * t);
-
-    Serial.print(">Pitch:");
-    Serial.print(pitch);
-    Serial.print(",Roll:");
-    Serial.print(roll);
-    Serial.print(",Yaw:");
-    Serial.println(yaw);
-
-    delay(20);  // 50 målinger per sekund
+    if (!imuInitialized) {
+        imuInitialized = initIMU();
+        if (!imuInitialized){
+            delay(100);
+        }
+        lastIMURead = millis();
+    } else if (millis() - lastIMURead >= 1000) {
+        Serial.println("Lost connection to IMU...");
+        imuInitialized = false;
+        delay(100);
+    } else if (readIMU()) {
+        lastIMURead = millis();
+        orientation = getOrientation();
+        Serial.printf(">Pitch:%.3f,Roll:%.3f,Yaw:%.3f\r\n", orientation.pitch, orientation.roll, orientation.yaw);
+    }
 }
