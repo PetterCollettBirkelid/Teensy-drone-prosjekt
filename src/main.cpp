@@ -2,31 +2,25 @@
 #include <Arduino.h>
 #include <math.h>
 #include "IMU.h"
+#include "OLED.h"
 
 Orientation orientation;
-bool imuInitialized = false;
-unsigned long lastIMURead = 0;
 
 void setup() {
     delay(1000);
     Serial.begin(115200);
+    initIMU();
 }
 
 void loop() {
-
-    if (!imuInitialized) {
-        imuInitialized = initIMU();
-        if (!imuInitialized){
-            delay(100);
+    if (IMUconnected()) {
+        if (readIMU()){
+            getOrientation(orientation);
+            Serial.printf(">Pitch:%.3f,Roll:%.3f,Yaw:%.3f\r\n", orientation.pitch, orientation.roll, orientation.yaw);
         }
-        lastIMURead = millis();
-    } else if (millis() - lastIMURead >= 1000) {
-        Serial.println("Lost connection to IMU...");
-        imuInitialized = false;
-        delay(100);
-    } else if (readIMU()) {
-        lastIMURead = millis();
-        orientation = getOrientation();
-        Serial.printf(">Pitch:%.3f,Roll:%.3f,Yaw:%.3f\r\n", orientation.pitch, orientation.roll, orientation.yaw);
+        OLEDPrint(orientation);
+    } else {
+        recoverIMU();
+        OLEDerror();
     }
 }

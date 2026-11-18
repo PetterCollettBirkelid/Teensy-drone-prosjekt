@@ -1,11 +1,13 @@
+#pragma once
+
 struct Orientation {
     float pitch;
     float roll;
     float yaw;
 };
 
-bool initIMU();
-
+void initIMU();
 bool readIMU();
-
-Orientation getOrientation();
+bool IMUconnected();
+void getOrientation(Orientation& orientation);
+void recoverIMU();
